@@ -81,14 +81,18 @@ write.csv(survey_weighted, 'cleaned_survey.csv', row.names=FALSE)
 # split data
 
 devices_frame = split_columns(
-  survey_cleaned,
+  survey_weighted,
   'devices'
 ) %>% 
   gather_category('devices_')
 
+write.csv(devices_frame, 'devices.csv', row.names=FALSE)
+
 clothing_frame = split_columns(
-  survey_cleaned,
+  survey_weighted,
   'what_do_you_wear'
 ) %>%
   gather_category('what_do_you_wear_')
+
+write.csv(clothing_frame, 'clothing.csv', row.names=FALSE)
 

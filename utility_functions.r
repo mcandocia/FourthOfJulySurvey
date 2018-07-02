@@ -1,5 +1,6 @@
 library(qdapTools)
 library(tidyr)
+library(scales)
 
 split_columns <- function(data, column, sep=';'){
   new_columns = mtabulate(lapply( strsplit(data[,column], sep),
@@ -7,6 +8,8 @@ split_columns <- function(data, column, sep=';'){
   )
   return(cbind(data, new_columns))
 }
+
+bold_percent <- function(x) sprintf('bold(%s)', percent(x))
 
 relevel_var <- function(data, var, lvls){
   data[,var]=factor(as.character(data[,var]),levels=lvls)
@@ -67,4 +70,40 @@ gather_category <- function(data, prefix, sort_by_count=TRUE, deperiodize=TRUE) 
                                     from = levels(new_data[,new_column,]),
                                     to = trans(gsub(prefix,'', levels(new_data[,new_column]))))
   return(new_data)
+}
+
+# similarity functions
+
+cosine_similarity <- function(x, y){
+  as.numeric(x %*% y /sqrt(sum(x^2)*sum(y^2)))
+}
+
+cosine_similarity_ <- function(i, j, m){
+  cosine_similarity(m[i,], m[j,])
+}
+
+jaccard_similarity <- function(x, y){
+  sum(x & y)/sum(x | y)
+}
+
+jaccard_similarity_ <- function(i, j, m){
+  jaccard_similarity(m[i,],m[j,])
+}
+
+refactor_by_cluster <- function(data, cluster){
+  data %>% mutate(Var1 = factor(Var1, levels = levels(Var1)[cluster$order]),
+                  Var2 = factor(Var2, levels = levels(Var2)[cluster$order])
+  )
+}
+
+
+calculate_group_stats <- function(data, variable, value_variable, group_variables = NULL){
+  if (missing(value_variable))
+    value_variable = paste0(variable, '_value')
+  x = data
+  if (!is.null(group_variables))
+    x  = x %>% group_by_at(vars(one_of(c(group_variables, variable))))
+  else
+    x = x %>% group_by_at(vars(variable))
+  x %>% summarise_at(.vars=value_variable, .funs=list(count=sum, prop=mean))
 }
